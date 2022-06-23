@@ -1,10 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MyDu
 {
     class Program
     {
+        [DllImport("kernel32.dll")]
+        static extern uint GetCompressedFileSizeW([In, MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+              [Out, MarshalAs(UnmanagedType.U4)] out uint lpFileSizeHigh);
+
         static void Main(string[] args)
         {
             if (args.Length != 1)
@@ -15,19 +20,53 @@ namespace MyDu
             Array.Sort(subDirectoryPathes);
             foreach (var e in subDirectoryPathes)
             {
-                Console.WriteLine($"{Path.GetRelativePath(args[0], e)}, {GetDirectorySize(e)}");
+                var relativePath = Path.GetRelativePath(args[0], e);
+                try
+                {
+                    var sizeInfo = GetDirectorySize(e);
+                    Print(relativePath, sizeInfo);
+                    //Console.WriteLine($"{relativePath}, {sizeInfo.Size}, {sizeInfo.CompressedSize}");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Print(relativePath, null);
+                    //Console.WriteLine($"{relativePath}, access denied.");
+                }
             }
-            long size = 0;
-            foreach (var e in Directory.GetFiles(args[0]))
+            try
             {
-                size += GetFileSize(e);
+                var sizeInfo = new SizeInfo(0, 0);
+                foreach (var e in Directory.GetFiles(args[0]))
+                {
+                    sizeInfo += GetFileSize(e);
+                }
+                Print(".", sizeInfo);
+                //Console.WriteLine($"., {sizeInfo.Size}, {sizeInfo.CompressedSize}");
             }
-            Console.WriteLine($"., {size}");
+            catch (UnauthorizedAccessException)
+            {
+                Print(".", null);
+                //Console.WriteLine($"., access denied.");
+            }
         }
 
-        static long GetDirectorySize(string directoryPath)
+        static void Print(string path, SizeInfo sizeInfo)
         {
-            long size = 0;
+            Console.Write($"{path,-20}");
+            if (sizeInfo == null)
+            {
+                Console.WriteLine($" (access denied.)");
+            }
+            else
+            {
+                Console.WriteLine($" {sizeInfo.Size,10} {sizeInfo.CompressedSize,10}");
+            }
+        }
+
+
+        static SizeInfo GetDirectorySize(string directoryPath)
+        {
+            var size = new SizeInfo(0, 0);
             foreach (var e in Directory.GetDirectories(directoryPath))
             {
                 size += GetDirectorySize(e);
@@ -39,10 +78,12 @@ namespace MyDu
             return size;
         }
 
-        static long GetFileSize(string filePath)
+        static SizeInfo GetFileSize(string filePath)
         {
             var fi = new FileInfo(filePath);
-            return fi.Length;
+            var losize = GetCompressedFileSizeW(filePath, out var hosize);
+            var compressedSize = (long)hosize << 32 | losize;
+            return new SizeInfo(fi.Length, compressedSize);
         }
 
         static void Usage()
