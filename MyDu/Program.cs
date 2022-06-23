@@ -48,15 +48,15 @@ namespace MyDu
 
         static void Print(string path, SizeInfo sizeInfo)
         {
-            Console.Write($"{path,-40}");
             if (sizeInfo == null)
             {
-                Console.WriteLine($"            -            -");
+                Console.Write($"            -            -");
             }
             else
             {
-                Console.WriteLine($" {sizeInfo.Size,12} {sizeInfo.CompressedSize,12}");
+                Console.Write($" {sizeInfo.Size,12} {sizeInfo.CompressedSize,12}");
             }
+            Console.WriteLine($"  {path}");
         }
 
 
