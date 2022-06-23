@@ -25,12 +25,10 @@ namespace MyDu
                 {
                     var sizeInfo = GetDirectorySize(e);
                     Print(relativePath, sizeInfo);
-                    //Console.WriteLine($"{relativePath}, {sizeInfo.Size}, {sizeInfo.CompressedSize}");
                 }
                 catch (UnauthorizedAccessException)
                 {
                     Print(relativePath, null);
-                    //Console.WriteLine($"{relativePath}, access denied.");
                 }
             }
             try
@@ -41,25 +39,23 @@ namespace MyDu
                     sizeInfo += GetFileSize(e);
                 }
                 Print(".", sizeInfo);
-                //Console.WriteLine($"., {sizeInfo.Size}, {sizeInfo.CompressedSize}");
             }
             catch (UnauthorizedAccessException)
             {
                 Print(".", null);
-                //Console.WriteLine($"., access denied.");
             }
         }
 
         static void Print(string path, SizeInfo sizeInfo)
         {
-            Console.Write($"{path,-20}");
+            Console.Write($"{path,-40}");
             if (sizeInfo == null)
             {
-                Console.WriteLine($" (access denied.)");
+                Console.WriteLine($"            -            -");
             }
             else
             {
-                Console.WriteLine($" {sizeInfo.Size,10} {sizeInfo.CompressedSize,10}");
+                Console.WriteLine($" {sizeInfo.Size,12} {sizeInfo.CompressedSize,12}");
             }
         }
 
