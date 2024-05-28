@@ -6,9 +6,13 @@ namespace MyDu
 {
     class Program
     {
-        [DllImport("kernel32.dll")]
-        static extern uint GetCompressedFileSizeW([In, MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
-              [Out, MarshalAs(UnmanagedType.U4)] out uint lpFileSizeHigh);
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern uint GetCompressedFileSizeW(string lpFileName, out uint lpFileSizeHigh);
+        //static extern uint GetCompressedFileSizeW([In, MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+        //      [Out, MarshalAs(UnmanagedType.U4)] out uint lpFileSizeHigh);
+
+        //[DllImport("kernel32.dll", SetLastError = true)]
+        //private extern static bool Beep(uint dwFreq, uint dwDuration);
 
         static void Main(string[] args)
         {
@@ -78,6 +82,13 @@ namespace MyDu
         {
             var fi = new FileInfo(filePath);
             var losize = GetCompressedFileSizeW(filePath, out var hosize);
+            if (losize == 0xffffffff)
+            {
+                // エラーが発生
+                int errCode = Marshal.GetLastWin32Error();
+                Console.WriteLine($"{errCode}");
+            }
+
             var compressedSize = (long)hosize << 32 | losize;
             return new SizeInfo(fi.Length, compressedSize);
         }
